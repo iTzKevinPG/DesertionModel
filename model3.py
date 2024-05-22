@@ -9,24 +9,31 @@ from sklearn.preprocessing import StandardScaler
 train_data = pd.read_csv("./trainData.csv")
 test_data = pd.read_csv("./testData.csv")
 
-# Normalizar las características
-scaler = StandardScaler()
-features = ["averageGrade", "totalAcciones", "numCourses"]
+# Ponderación de las acciones: puedes ajustar estos pesos según lo que consideres adecuado
+peso_ver = 1
+peso_subir = 2
 
-train_data['weightedGrade'] = train_data['averageGrade'] * (1 + 0.01 * train_data['totalAcciones'])
-test_data['weightedGrade'] = test_data['averageGrade'] * (1 + 0.01 * test_data['totalAcciones'])
+# Añadir características específicas y ponderadas
+train_data['weightedActions'] = train_data['totalAccionesVer'] * peso_ver + train_data['totalAccionesSubir'] * peso_subir
+test_data['weightedActions'] = test_data['totalAccionesVer'] * peso_ver + test_data['totalAccionesSubir'] * peso_subir
+
+train_data['weightedGrade'] = train_data['averageGrade'] * (1 + 0.01 * train_data['weightedActions'])
+test_data['weightedGrade'] = test_data['averageGrade'] * (1 + 0.01 * test_data['weightedActions'])
 train_data['coursesLoad'] = train_data['numCourses']
 test_data['coursesLoad'] = test_data['numCourses']
 
-# Aplicar normalización
-X_train = train_data[["weightedGrade", "totalAcciones", "coursesLoad"]]
-X_test = test_data[["weightedGrade", "totalAcciones", "coursesLoad"]]
+# Normalizar las características
+scaler = StandardScaler()
+features = ["weightedGrade", "weightedActions", "coursesLoad"]  # Actualizado para incluir las acciones ponderadas
+
+X_train = train_data[features]
+X_test = test_data[features]
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 
 # Definir etiquetas
-y_train = np.where(train_data['weightedGrade'] > 30, 'S', 'N')
-y_test = np.where(test_data['weightedGrade'] > 30, 'S', 'N')
+y_train = np.where(train_data['weightedGrade'] > 3, 'S', 'N')
+y_test = np.where(test_data['weightedGrade'] > 3, 'S', 'N')
 
 # Configuración de la búsqueda en cuadrícula
 param_grid = {
